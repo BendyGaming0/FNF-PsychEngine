@@ -408,6 +408,14 @@ class FunkinLua {
 				getInstance().insert(position, spr);
 				return;
 			}
+			if(PlayState.instance.modchartVideos.exists(obj)) {
+				var spr:VideoSprite = PlayState.instance.modchartVideos.get(obj);
+				if(spr.wasAdded) {
+					getInstance().remove(spr, true);
+				}
+				getInstance().insert(position, spr);
+				return;
+			}
 			if(PlayState.instance.modchartTexts.exists(obj)) {
 				var spr:ModchartText = PlayState.instance.modchartTexts.get(obj);
 				if(spr.wasAdded) {
@@ -1316,6 +1324,61 @@ class FunkinLua {
 			}
 			#end
 		});
+		Lua_helper.add_callback(lua, "makeLuaVideoSprite", function(tag:String, videoFile:String, x:Float, y:Float) {
+			#if VIDEOS_ALLOWED
+			if(FileSystem.exists(Paths.video(videoFile))) {
+				tag = tag.replace('.', '');
+				resetVideoTag(tag);
+				var video = new VideoSprite(videoFile, x, y);
+				PlayState.instance.modchartVideos.set(tag, video);
+				video.active = true;
+			} else {
+				luaTrace('Video file not found: ' + videoFile);
+			}
+			#else
+			luatrace('Videos are not allowed on this build');
+			#end
+		});
+		Lua_helper.add_callback(lua, "addLuaVideoSprite", function(tag:String) {
+			if(PlayState.instance.modchartVideos.exists(tag)) {
+				var shit:VideoSprite = PlayState.instance.modchartVideos.get(tag);
+				if(!shit.wasAdded) {
+					getInstance().add(shit);
+					shit.wasAdded = true;
+				}
+			}
+		});
+		Lua_helper.add_callback(lua, "removeLuaVideoSprite", function(tag:String, destroy:Bool) {
+			if(!PlayState.instance.modchartVideos.exists(tag)) {
+				return;
+			}
+			
+			var pee:VideoSprite = PlayState.instance.modchartVideos.get(tag);
+			if(destroy) {
+				pee.kill();
+			}
+
+			if(pee.wasAdded) {
+				getInstance().remove(pee, true);
+				pee.wasAdded = false;
+			}
+
+			if(destroy) {
+				pee.onVLCComplete();
+				pee.destroy();
+				PlayState.instance.modchartVideos.remove(tag);
+			}
+		});
+		Lua_helper.add_callback(lua, "pauseVideoSprite", function(tag:String) {
+			if(tag != null && tag.length > 1 && PlayState.instance.modchartVideos.exists(tag)) {
+				PlayState.instance.modchartVideos.get(tag).pause();
+			}
+		});
+		Lua_helper.add_callback(lua, "resumeVideoSprite", function(tag:String) {
+			if(tag != null && tag.length > 1 && PlayState.instance.modchartVideos.exists(tag)) {
+				PlayState.instance.modchartVideos.get(tag).resume();
+			}
+		});
 		
 		Lua_helper.add_callback(lua, "playMusic", function(sound:String, volume:Float = 1, loop:Bool = false) {
 			FlxG.sound.playMusic(Paths.music(sound), volume, loop);
@@ -1807,6 +1870,21 @@ class FunkinLua {
 		PlayState.instance.modchartSprites.remove(tag);
 	}
 
+	function resetVideoTag(tag:String) {
+		if(!PlayState.instance.modchartVideos.exists(tag)) {
+			return;
+		}
+		
+		var pee:VideoSprite = PlayState.instance.modchartVideos.get(tag);
+		pee.kill();
+		pee.onVLCComplete();
+		if(pee.wasAdded) {
+			PlayState.instance.remove(pee, true);
+		}
+		pee.destroy();
+		PlayState.instance.modchartVideos.remove(tag);
+	}
+
 	function cancelTween(tag:String) {
 		if(PlayState.instance.modchartTweens.exists(tag)) {
 			PlayState.instance.modchartTweens.get(tag).cancel();
@@ -1970,6 +2048,8 @@ class FunkinLua {
 		var coverMeInPiss:Dynamic = null;
 		if(PlayState.instance.modchartSprites.exists(objectName)) {
 			coverMeInPiss = PlayState.instance.modchartSprites.get(objectName);
+		} else if (PlayState.instance.modchartVideos.exists(objectName)) {
+			coverMeInPiss = PlayState.instance.modchartVideos.get(objectName);
 		} else if(checkForTextsToo && PlayState.instance.modchartTexts.exists(objectName)) {
 			coverMeInPiss = PlayState.instance.modchartTexts.get(objectName);
 		} else {

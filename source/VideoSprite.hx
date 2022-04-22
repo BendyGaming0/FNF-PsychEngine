@@ -1,3 +1,4 @@
+
 #if web
 import openfl.net.NetConnection;
 import openfl.net.NetStream;
@@ -10,6 +11,7 @@ import vlc.VlcBitmap;
 import openfl.display.BitmapData;
 import flixel.FlxBasic;
 import flixel.FlxG;
+import flixel.FlxSprite;
 
 /**
  *  Displays a MP4 video as a flixel sprite, a modification of FlxVideo from Poly Engine
@@ -17,7 +19,7 @@ import flixel.FlxG;
 class VideoSprite extends FlxSprite {
 	#if VIDEOS_ALLOWED
 	public var finishCallback:Void->Void = null;
-	
+	public var wasAdded:Bool = false; // lua
 	public var muted:Bool=false;
 	public var volume(default, set):Float=1;
 	#if desktop
@@ -31,18 +33,19 @@ class VideoSprite extends FlxSprite {
 		if (value>1) {
 			value=1;
 		}
-		elseif(value<0) {
+		else if(value<0) {
 			value=0;
 		}
 		volume=value;
-		return volume
+		return volume;
 	}
 
 	public function new(name:String, X:Float, Y:Float) {
-		super();
+		super(X,Y);
+		antialiasing = ClientPrefs.globalAntialiasing;
 
 		#if web
-		player:Video = new Video();
+		player = new Video();
 		player.x = 0;
 		player.y = 0;
 		var netConnect = new NetConnection();
@@ -94,7 +97,7 @@ class VideoSprite extends FlxSprite {
 			pixels.draw(vlcBitmap);
 		#end
 		
-        super.draw()
+        super.draw();
     }
 
 	#if desktop
