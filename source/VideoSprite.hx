@@ -22,10 +22,11 @@ class VideoSprite extends FlxSprite {
 	public var wasAdded:Bool = false; // lua
 	public var muted:Bool=false;
 	public var volume(default, set):Float=1;
+	private var render:Bool = false;
 	#if desktop
 	public var vlcBitmap:VlcBitmap;
-    #elseif web
-    public var player:Video;
+    	#elseif web
+    	public var player:Video;
 	#end
 		
 	function set_volume(value:Float)
@@ -81,24 +82,27 @@ class VideoSprite extends FlxSprite {
 		vlcBitmap.fullscreen = false;
 		fixVolume(null);
 
+		FlxG.game.addChildAt(vlcBitmap, 0);
 		vlcBitmap.play(checkFile(name));
+		render = true;
 		#end
-		//create new canvas for the MP4
 		pixels = new BitmapData(1280, 720, false, 0xFF000000);
 	}
     
-    override public function draw()
-    {
-        #if web
-		if(player!=null)
-			pixels.draw(player);
-        #elseif desktop
-		if(vlcBitmap!=null)
-			pixels.draw(vlcBitmap);
-		#end
-		
-        super.draw();
-    }
+    	override public function draw()
+    	{
+		if (render) {
+			#if web
+			if(player!=null)
+				pixels.draw(player);
+			#elseif desktop
+			if(vlcBitmap!=null)
+				pixels.draw(vlcBitmap);
+			#end
+		}
+
+		super.draw();
+    	}
 
 	#if desktop
 	function checkFile(fileName:String):String
@@ -141,6 +145,11 @@ class VideoSprite extends FlxSprite {
 
 		// Clean player, just in case!
 		vlcBitmap.dispose();
+		
+		if (FlxG.game.contains(vlcBitmap))
+		{
+			FlxG.game.removeChild(vlcBitmap);
+		}
 
 		if (finishCallback != null)
 		{
@@ -152,6 +161,7 @@ class VideoSprite extends FlxSprite {
 	function onVLCError()
 		{
 			trace("An error has occured while trying to load the video.\nPlease, check if the file you're loading exists.");
+			render = false; //don't crash
 			if (finishCallback != null) {
 				finishCallback();
 			}
