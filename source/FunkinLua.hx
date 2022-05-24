@@ -410,6 +410,7 @@ class FunkinLua {
 				getInstance().insert(position, spr);
 				return;
 			}
+			#if VIDEOS_ALLOWED
 			if(PlayState.instance.modchartVideos.exists(obj)) {
 				var spr:VideoSprite = PlayState.instance.modchartVideos.get(obj);
 				if(spr.wasAdded) {
@@ -418,6 +419,7 @@ class FunkinLua {
 				getInstance().insert(position, spr);
 				return;
 			}
+			#end
 			if(PlayState.instance.modchartTexts.exists(obj)) {
 				var spr:ModchartText = PlayState.instance.modchartTexts.get(obj);
 				if(spr.wasAdded) {
@@ -1339,10 +1341,11 @@ class FunkinLua {
 				luaTrace('Video file not found: ' + videoFile);
 			}
 			#else
-			luatrace('Videos are not allowed on this build');
+			luaTrace('Videos are not allowed on this build');
 			#end
 		});
 		Lua_helper.add_callback(lua, "addLuaVideoSprite", function(tag:String) {
+			#if VIDEOS_ALLOWED
 			if(PlayState.instance.modchartVideos.exists(tag)) {
 				var shit:VideoSprite = PlayState.instance.modchartVideos.get(tag);
 				if(!shit.wasAdded) {
@@ -1350,8 +1353,12 @@ class FunkinLua {
 					shit.wasAdded = true;
 				}
 			}
+			#else
+			luaTrace('Videos are not allowed on this build');
+			#end
 		});
 		Lua_helper.add_callback(lua, "removeLuaVideoSprite", function(tag:String, destroy:Bool) {
+			#if VIDEOS_ALLOWED
 			if(!PlayState.instance.modchartVideos.exists(tag)) {
 				return;
 			}
@@ -1371,16 +1378,27 @@ class FunkinLua {
 				pee.destroy();
 				PlayState.instance.modchartVideos.remove(tag);
 			}
+			#else
+			luaTrace('Videos are not allowed on this build');
+			#end
 		});
 		Lua_helper.add_callback(lua, "pauseVideoSprite", function(tag:String) {
+			#if VIDEOS_ALLOWED
 			if(tag != null && tag.length > 1 && PlayState.instance.modchartVideos.exists(tag)) {
 				PlayState.instance.modchartVideos.get(tag).pause();
 			}
+			#else
+			luaTrace('Videos are not allowed on this build');
+			#end
 		});
 		Lua_helper.add_callback(lua, "resumeVideoSprite", function(tag:String) {
+			#if VIDEOS_ALLOWED
 			if(tag != null && tag.length > 1 && PlayState.instance.modchartVideos.exists(tag)) {
 				PlayState.instance.modchartVideos.get(tag).resume();
 			}
+			#else
+			luaTrace('Videos are not allowed on this build');
+			#end
 		});
 		
 		Lua_helper.add_callback(lua, "playMusic", function(sound:String, volume:Float = 1, loop:Bool = false) {
@@ -1874,6 +1892,7 @@ class FunkinLua {
 	}
 
 	function resetVideoTag(tag:String) {
+		#if VIDEOS_ALLOWED
 		if(!PlayState.instance.modchartVideos.exists(tag)) {
 			return;
 		}
@@ -1886,6 +1905,9 @@ class FunkinLua {
 		}
 		pee.destroy();
 		PlayState.instance.modchartVideos.remove(tag);
+		#else
+		luaTrace('Videos are not allowed on this build');
+		#end
 	}
 
 	function cancelTween(tag:String) {
